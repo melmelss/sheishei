@@ -498,40 +498,55 @@ export default function WhatsAppFunnelDemo() {
     scrollToBottom()
   }, [conversation])
 
-  const handleUserAction = useCallback(
-    async (response: string) => {
-      const steps = funnelSteps // Obtém a versão mais recente das etapas do funil
-      addMessage({ type: "user", content: response }) // Adiciona mensagem do usuário AQUI, e apenas AQUI
+ const handleUserAction = useCallback(
+  async (response: string) => {
+    // --- REDIRECIONAMENTO PARA OS CHECKOUTS DOS FRETES ---
+    if (response === "Frete Express - 7 a 10 dias úteis - R$23,68") {
+      window.location.href = "https://pay.lojaprotegida.shop/bz5KZbVe0o9Z7dL"
+      return
+    }
+    if (response === "Frete Advanced - 3 a 5 dias úteis - R$29,82") {
+      window.location.href = "https://pay.lojaprotegida.shop/PyE2Zy8jv7K3qRb"
+      return
+    }
+    if (response === "Frete Full - 1 dia útil - R$35,40") {
+      window.location.href = "https://pay.lojaprotegida.shop/7vJOGY4KW88ZKXd"
+      return
+    }
+    // -----------------------------------------------------
 
-      // Define a opção de prêmio selecionada quando o usuário responde ao Passo 11
-      if (currentStep === 11) {
-        setSelectedPrizeOption(response)
+    const steps = funnelSteps // Obtém a versão mais recente das etapas do funil
+    addMessage({ type: "user", content: response }) // Adiciona mensagem do usuário AQUI, e apenas AQUI
+
+    // Define a opção de prêmio selecionada quando o usuário responde ao Passo 11
+    if (currentStep === 11) {
+      setSelectedPrizeOption(response)
+    }
+
+    // Determine the next step function
+    const nextStepFunction = steps[currentStep + 1]
+
+    if (nextStepFunction) {
+      // Se o passo atual for 13 (Justificativa para o Prêmio) e estamos aguardando input,
+      // chamamos a função do próximo passo, mas NÃO incrementamos currentStep aqui.
+      // O incremento ocorrerá quando o input for de fato enviado (tratado no onClick/onKeyDown do Input).
+      if (currentStep === 13 && awaitingInput) {
+        await nextStepFunction(response)
       }
-
-      // Determine the next step function
-      const nextStepFunction = steps[currentStep + 1]
-
-      if (nextStepFunction) {
-        // Se o passo atual for 13 (Justificativa para o Prêmio) e estamos aguardando input,
-        // chamamos a função do próximo passo, mas NÃO incrementamos currentStep aqui.
-        // O incremento ocorrerá quando o input for de fato enviado (tratado no onClick/onKeyDown do Input).
-        if (currentStep === 13 && awaitingInput) {
-          await nextStepFunction(response)
-        }
-        // Se o passo atual for 16 (Lida com Tamanho/Frete)
-        // E a resposta do usuário for "Por que preciso pagar o frete?",
-        // então NÃO incrementa o passo, efetivamente permanecendo no mesmo passo.
-        else if (currentStep === 16 && response === "Por que preciso pagar o frete?") {
-          await nextStepFunction(response) // Ainda executa a função para o passo atual
-        } else {
-          // Para todos os outros casos, executa a função do próximo passo e incrementa currentStep.
-          await nextStepFunction(response)
-          setCurrentStep((prev) => prev + 1)
-        }
+      // Se o passo atual for 16 (Lida com Tamanho/Frete)
+      // E a resposta do usuário for "Por que preciso pagar o frete?",
+      // então NÃO incrementa o passo, efetivamente permanecendo no mesmo passo.
+      else if (currentStep === 16 && response === "Por que preciso pagar o frete?") {
+        await nextStepFunction(response) // Ainda executa a função para o passo atual
+      } else {
+        // Para todos os outros casos, executa a função do próximo passo e incrementa currentStep.
+        await nextStepFunction(response)
+        setCurrentStep((prev) => prev + 1)
       }
-    },
-    [currentStep, funnelSteps, addMessage, simulateTyping, setSelectedPrizeOption, awaitingInput],
-  )
+    }
+  },
+  [currentStep, funnelSteps, addMessage, simulateTyping, setSelectedPrizeOption, awaitingInput],
+)
 
   const renderMessageContent = (message: any) => {
     switch (message.type) {

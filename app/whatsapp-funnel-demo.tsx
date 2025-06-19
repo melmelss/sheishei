@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { verifyCpf } from "./actions" // Importa o Server Action
 
 // Dados fictícios do usuário (USER_NAME e USER_DOB_OPTION foram removidos, o nome e nascimento virão da API)
-const USER_CPF = "11750514974" // Este CPF será o "válido" para a simulação
+const USER_CPF = "12758539874" // Este CPF será o "válido" para a simulação
 
 const CheckIcon = () => (
   <svg width="16" height="12" viewBox="0 0 16 12" className="text-[#60d550] ml-1">
@@ -312,12 +312,12 @@ export default function WhatsAppFunnelDemo() {
 
         // Vídeo 2
         await simulateTyping()
-        addMessage({ type: "video", content: "/video/video-2.mov" })
+        addMessage({ type: "video", content: "/video/video-2.mp4" })
         await new Promise((resolve) => setTimeout(resolve, 20000))
 
         // Vídeo 3
         await simulateTyping()
-        addMessage({ type: "video", content: "/video/video-3.mov" })
+        addMessage({ type: "video", content: "/video/video-3.mp4" })
         await new Promise((resolve) => setTimeout(resolve, 20000))
 
         // Adiciona botão para o usuário avançar manualmente

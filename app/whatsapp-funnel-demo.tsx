@@ -17,10 +17,8 @@ export default function WhatsAppFunnelDemo() {
   useEffect(() => {
     if (!isClient) return
     const checkMobile = () => {
-      // Detecção por user agent
       const ua = navigator.userAgent || navigator.vendor || (window as any).opera
       const isMobileUA = /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua)
-      // Detecção por tamanho de tela
       const isSmallScreen = window.innerWidth <= 768
       const mobile = isMobileUA && isSmallScreen
       setIsMobile(mobile)
@@ -31,6 +29,29 @@ export default function WhatsAppFunnelDemo() {
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
+  }, [isClient])
+
+  useEffect(() => {
+    const blockDevTools = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+        (e.ctrlKey && e.key === 'U') ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault()
+        window.location.href = "https://pt.wikipedia.org/wiki/Rato"
+      }
+    }
+    const blockContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+      window.location.href = "https://pt.wikipedia.org/wiki/Rato"
+    }
+    window.addEventListener('keydown', blockDevTools)
+    window.addEventListener('contextmenu', blockContextMenu)
+    return () => {
+      window.removeEventListener('keydown', blockDevTools)
+      window.removeEventListener('contextmenu', blockContextMenu)
+    }
   }, [isClient])
 
   // TODOS OS HOOKS DEVEM VIR ANTES DOS RETURNS ABAIXO!

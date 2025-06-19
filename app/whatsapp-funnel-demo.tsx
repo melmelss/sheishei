@@ -570,6 +570,8 @@ export default function WhatsAppFunnelDemo() {
         return (
           <div className="max-w-[85%] rounded-lg overflow-hidden shadow-sm relative">
             <video
+              playsInline
+              webkit-playsinline="true"
               autoPlay
               className="w-full h-auto"
               onClick={(e) => {

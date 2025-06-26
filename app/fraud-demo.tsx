@@ -22,23 +22,13 @@ export default function WhatsAppFraudDemo() {
   ])
   const [isTyping, setIsTyping] = useState(false)
   const [status, setStatus] = useState("online")
-
-  // Ref para a área de mensagens
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Impede o scroll do body
-  useEffect(() => {
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.body.style.overflow = ""
-    }
-  }, [])
-
+  // Ciclo do bot
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
 
     function botCycle() {
-      // Aguarda 8 segundos antes de iniciar o próximo ciclo
       timeoutId = setTimeout(() => {
         setIsTyping(true)
         setStatus("digitando...")
@@ -47,7 +37,6 @@ export default function WhatsAppFraudDemo() {
           setIsTyping(false)
           setStatus("online")
 
-          // Adiciona nova mensagem ocasionalmente
           if (Math.random() > 0.7) {
             const newMessage = {
               id: Date.now(),
@@ -57,15 +46,12 @@ export default function WhatsAppFraudDemo() {
             }
             setMessages((prev) => [...prev, newMessage])
           }
-
-          // Inicia o próximo ciclo
           botCycle()
-        }, 2000) // Delay do "digitando..."
-      }, 8000) // Delay entre as mensagens
+        }, 2000)
+      }, 8000)
     }
 
     botCycle()
-
     return () => clearTimeout(timeoutId)
   }, [])
 
@@ -75,10 +61,13 @@ export default function WhatsAppFraudDemo() {
   }, [messages, isTyping])
 
   return (
-    <>
-      {/* Header fixo fora do container centralizador */}
-      <div className="fixed top-0 left-0 right-0 bg-[#005e54] text-white p-3 flex items-center gap-3 z-30" style={{ maxWidth: "100vw" }}>
-        <div className="max-w-md mx-auto w-full flex items-center gap-3">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/10"
+      style={{ height: '100dvh', maxHeight: '100dvh', width: '100vw' }}
+    >
+      <div className="relative w-full max-w-md h-full bg-white flex flex-col" style={{ maxHeight: '100dvh', height: '100dvh' }}>
+        {/* Header fixo */}
+        <div className="bg-[#005e54] text-white p-3 flex items-center gap-3 sticky top-0 z-20">
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -110,10 +99,7 @@ export default function WhatsAppFraudDemo() {
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Container centralizado com padding-top para não ficar atrás do header */}
-      <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col" style={{ paddingTop: 64 }}>
         {/* Aviso de Conta Comercial */}
         <div className="p-4 sticky top-[56px] z-10 bg-white">
           <div className="bg-[#d5f4f0] rounded-lg p-3 flex items-center gap-2 text-sm">
@@ -160,12 +146,11 @@ export default function WhatsAppFraudDemo() {
               </div>
             </div>
           )}
-          {/* Elemento invisível para scroll automático */}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Área de Input */}
-        <div className="p-4 bg-gray-50 sticky bottom-[48px] z-10">
+        <div className="p-4 bg-gray-50 sticky bottom-0 z-10">
           <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border">
             <Input placeholder="Digite uma mensagem" className="border-0 focus-visible:ring-0 flex-1" />
             <Button variant="ghost" size="icon">
@@ -177,9 +162,10 @@ export default function WhatsAppFraudDemo() {
         {/* Aviso de Demonstração */}
         <div className="bg-red-100 border-t border-red-200 p-3 sticky bottom-0 z-20">
           <p className="text-red-800 text-xs text-center font-semibold">
+            ⚠️ DEMONSTRAÇÃO DE FRAUDE - NÃO É O WHATSAPP REAL
           </p>
         </div>
       </div>
-    </>
+    </div>
   )
 }

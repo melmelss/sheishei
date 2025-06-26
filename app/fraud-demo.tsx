@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { ArrowLeft, MoreVertical, Phone, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,17 @@ export default function WhatsAppFraudDemo() {
   ])
   const [isTyping, setIsTyping] = useState(false)
   const [status, setStatus] = useState("online")
+
+  // Ref para a área de mensagens
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Impede o scroll do body
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [])
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
@@ -57,6 +68,11 @@ export default function WhatsAppFraudDemo() {
 
     return () => clearTimeout(timeoutId)
   }, [])
+
+  // Scroll automático para o fim das mensagens
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isTyping])
 
   return (
     <>
@@ -144,6 +160,8 @@ export default function WhatsAppFraudDemo() {
               </div>
             </div>
           )}
+          {/* Elemento invisível para scroll automático */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Área de Input */}

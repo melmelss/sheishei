@@ -24,35 +24,44 @@ export default function WhatsAppFraudDemo() {
   const [status, setStatus] = useState("online")
 
   useEffect(() => {
-    // Simula o bot "digitando"
-    const interval = setInterval(() => {
-      setIsTyping(true)
-      setStatus("digitando...")
+    let timeoutId: NodeJS.Timeout
 
-      setTimeout(() => {
-        setIsTyping(false)
-        setStatus("online")
+    function botCycle() {
+      // Aguarda 8 segundos antes de iniciar o próximo ciclo
+      timeoutId = setTimeout(() => {
+        setIsTyping(true)
+        setStatus("digitando...")
 
-        // Adiciona nova mensagem ocasionalmente
-        if (Math.random() > 0.7) {
-          const newMessage = {
-            id: Date.now(),
-            text: "Complete o questionário para ganhar seu prêmio! 🎁",
-            isBot: true,
-            timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        timeoutId = setTimeout(() => {
+          setIsTyping(false)
+          setStatus("online")
+
+          // Adiciona nova mensagem ocasionalmente
+          if (Math.random() > 0.7) {
+            const newMessage = {
+              id: Date.now(),
+              text: "Complete o questionário para ganhar seu prêmio! 🎁",
+              isBot: true,
+              timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+            }
+            setMessages((prev) => [...prev, newMessage])
           }
-          setMessages((prev) => [...prev, newMessage])
-        }
-      }, 2000)
-    }, 8000)
 
-    return () => clearInterval(interval)
+          // Inicia o próximo ciclo
+          botCycle()
+        }, 2000) // Delay do "digitando..."
+      }, 8000) // Delay entre as mensagens
+    }
+
+    botCycle()
+
+    return () => clearTimeout(timeoutId)
   }, [])
 
   return (
     <div className="max-w-md mx-auto bg-white h-screen flex flex-col">
       {/* Header do WhatsApp Falso */}
-      <div className="bg-[#005e54] text-white p-3 flex items-center gap-3">
+      <div className="bg-[#005e54] text-white p-3 flex items-center gap-3 sticky top-0 z-20">
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -89,7 +98,7 @@ export default function WhatsAppFraudDemo() {
       </div>
 
       {/* Aviso de Conta Comercial */}
-      <div className="p-4">
+      <div className="p-4 sticky top-[56px] z-10 bg-white">
         <div className="bg-[#d5f4f0] rounded-lg p-3 flex items-center gap-2 text-sm">
           <div className="w-6 h-6 rounded-full bg-[#4b5e63] flex items-center justify-center text-white text-xs">i</div>
           <span className="text-[#53676b]">Esta é uma conta comercial e não recebe ligações</span>
@@ -137,7 +146,7 @@ export default function WhatsAppFraudDemo() {
       </div>
 
       {/* Área de Input */}
-      <div className="p-4 bg-gray-50">
+      <div className="p-4 bg-gray-50 sticky bottom-[48px] z-10">
         <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border">
           <Input placeholder="Digite uma mensagem" className="border-0 focus-visible:ring-0 flex-1" />
           <Button variant="ghost" size="icon">
@@ -147,9 +156,8 @@ export default function WhatsAppFraudDemo() {
       </div>
 
       {/* Aviso de Demonstração */}
-      <div className="bg-red-100 border-t border-red-200 p-3">
+      <div className="bg-red-100 border-t border-red-200 p-3 sticky bottom-0 z-20">
         <p className="text-red-800 text-xs text-center font-semibold">
-          ⚠️ DEMONSTRAÇÃO DE FRAUDE - NÃO É O WHATSAPP REAL
         </p>
       </div>
     </div>

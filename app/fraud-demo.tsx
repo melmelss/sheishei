@@ -65,41 +65,42 @@ export default function WhatsAppFraudDemo() {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/10"
       style={{ height: '100dvh', maxHeight: '100dvh', width: '100vw' }}
     >
-      <div className="relative w-full max-w-md h-full bg-white flex flex-col" style={{ maxHeight: '100dvh', height: '100dvh' }}>
-        {/* Header fixo */}
-        <div className="bg-[#005e54] text-white p-3 flex items-center gap-3 sticky top-0 z-20">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full overflow-hidden">
-              <img src="/placeholder.svg?height=40&width=40" alt="Shein Brasil" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-1">
-                <span className="font-semibold text-sm">Shein Brasil</span>
-                {/* Ícone de verificado */}
-                <svg viewBox="0 0 18 18" height="16" width="16" className="text-green-400">
-                  <polygon
-                    fill="currentColor"
-                    points="9,16 7.1,16.9 5.8,15.2 3.7,15.1 3.4,13 1.5,12 2.2,9.9 1.1,8.2 2.6,6.7 2.4,4.6 4.5,4 5.3,2 7.4,2.4 9,1.1 10.7,2.4 12.7,2 13.6,4 15.6,4.6 15.5,6.7 17,8.2 15.9,9.9 16.5,12 14.7,13 14.3,15.1 12.2,15.2 10.9,16.9"
-                  />
-                  <polygon fill="white" points="13.1,7.3 12.2,6.5 8.1,10.6 5.9,8.5 5,9.4 8,12.4" />
-                </svg>
-              </div>
-              <span className="text-xs opacity-75">{status}</span>
-            </div>
+      {/* Header fixo com aceleração de hardware */}
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#005e54] text-white p-3 flex items-center gap-3 [transform:translateZ(0)]">
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex items-center gap-3 flex-1">
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img src="/placeholder.svg?height=40&width=40" alt="Shein Brasil" className="w-full h-full object-cover" />
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-              <Phone className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
+          <div className="flex-1">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-sm">Shein Brasil</span>
+              {/* Ícone de verificado */}
+              <svg viewBox="0 0 18 18" height="16" width="16" className="text-green-400">
+                <polygon
+                  fill="currentColor"
+                  points="9,16 7.1,16.9 5.8,15.2 3.7,15.1 3.4,13 1.5,12 2.2,9.9 1.1,8.2 2.6,6.7 2.4,4.6 4.5,4 5.3,2 7.4,2.4 9,1.1 10.7,2.4 12.7,2 13.6,4 15.6,4.6 15.5,6.7 17,8.2 15.9,9.9 16.5,12 14.7,13 14.3,15.1 12.2,15.2 10.9,16.9"
+                />
+                <polygon fill="white" points="13.1,7.3 12.2,6.5 8.1,10.6 5.9,8.5 5,9.4 8,12.4" />
+              </svg>
+            </div>
+            <span className="text-xs opacity-75">{status}</span>
           </div>
         </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+            <Phone className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+            <MoreVertical className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
 
+      {/* Container centralizado com padding-top para não sobrepor o header */}
+      <div className="relative w-full max-w-md h-full bg-white flex flex-col" style={{ maxHeight: '100dvh', height: '100dvh', paddingTop: 56 }}>
         {/* Aviso de Conta Comercial */}
         <div className="p-4 sticky top-[56px] z-10 bg-white">
           <div className="bg-[#d5f4f0] rounded-lg p-3 flex items-center gap-2 text-sm">

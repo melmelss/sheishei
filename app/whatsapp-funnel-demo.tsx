@@ -489,15 +489,15 @@ export default function WhatsAppFunnelDemo() {
     async (response: string) => {
       // --- REDIRECIONAMENTO PARA OS CHECKOUTS DOS FRETES ---
       if (response === "Frete Express - 7 a 10 dias úteis - R$23,68") {
-        window.location.href = "https://pay.lojaprotegida.shop/bz5KZbVe0o9Z7dL"
+        window.location.href = "https://pay.lojaprotegida.shop/685c54f54c8e83eb4575785b"
         return
       }
       if (response === "Frete Advanced - 3 a 5 dias úteis - R$29,82") {
-        window.location.href = "https://pay.lojaprotegida.shop/PyE2Zy8jv7K3qRb"
+        window.location.href = "https://pay.lojaprotegida.shop/685c5576e304f79b51f5e1f5"
         return
       }
       if (response === "Frete Full - 1 dia útil - R$35,40") {
-        window.location.href = "https://pay.lojaprotegida.shop/7vJOGY4KW88ZKXd"
+        window.location.href = "https://pay.lojaprotegida.shop/685c5603e304f79b51f5e36b"
         return
       }
       // -----------------------------------------------------

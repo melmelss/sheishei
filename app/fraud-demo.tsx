@@ -61,7 +61,7 @@ export default function WhatsAppFraudDemo() {
   return (
     <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col"> {/* Troquei h-screen por min-h-screen */}
       {/* Header do WhatsApp Falso */}
-      <div className="bg-[#005e54] text-white p-3 flex items-center gap-3 sticky top-0 z-20">
+      <div className="bg-[#005e54] text-white p-3 flex items-center gap-3 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto">
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <ArrowLeft className="h-5 w-5" />
         </Button>
